@@ -196,42 +196,68 @@ void fb_draw_image(int x, int y, fb_image *image, int color)
 	if(x<0) {w+=x; ix-=x; x=0;}
 	if(y<0) {h+=y; iy-=y; y=0;}
 	
-	if(x+w > SCREEN_WIDTH) {
-		w = SCREEN_WIDTH - x;
-	}
-	if(y+h > SCREEN_HEIGHT) {
-		h = SCREEN_HEIGHT - y;
-	}
+	if(x+w > SCREEN_WIDTH) {w = SCREEN_WIDTH - x;}
+	if(y+h > SCREEN_HEIGHT) {h = SCREEN_HEIGHT - y;}
 	if((w <= 0)||(h <= 0)) return;
 
 	int *buf = _begin_draw(x,y,w,h);
-/*---------------------------------------------------------------*/
 	char *dst = (char *)(buf + y*SCREEN_WIDTH + x);
-	char *src; //不同的图像颜色格式定位不同
-/*---------------------------------------------------------------*/
-
+	// 起始时可能有偏移
+	char *src = image->content + iy*image->line_byte + ix*4;
 	int alpha;
 	int ww;
-
-	if(image->color_type == FB_COLOR_RGB_8880) /*lab3: jpg*/
-	{
-		printf("you need implement fb_draw_image() FB_COLOR_RGB_8880\n"); exit(0);
-
+	/*lab3: jpg*/
+	if(image->color_type == FB_COLOR_RGB_8880) {
+		/* 不需要处理透明度只需要将对应的点加载到缓冲区即可 */
+        for(int i = 0; i < h; i++)
+            memcpy(dst + i*SCREEN_WIDTH*4,src + i*image->line_byte,w*4);
 		return;
 	}
-	else if(image->color_type == FB_COLOR_RGBA_8888) /*lab3: png*/
-	{
-		printf("you need implement fb_draw_image() FB_COLOR_RGBA_8888\n"); exit(0);
-
+	/*lab3: png*/
+	else if(image->color_type == FB_COLOR_RGBA_8888) {
+        for (int i = 0 ; i < h ; i++) {
+            for (int j = 0 ; j < w ; j++) {
+                char * pcolor = (src + i*image->line_byte + j*4);
+                char * p = (char*)((int*)dst+i*SCREEN_WIDTH+j);
+                switch (pcolor[3]) {
+                    case 0: break;
+                    case 255: p[0] = pcolor[0]; p[1] = pcolor[1]; p[2] = pcolor[2]; break;
+                    default:
+                        p[0] += (((pcolor[0] - p[0]) *pcolor[3])>>8 );
+                        p[1] += (((pcolor[1] - p[1]) *pcolor[3])>>8 );
+                        p[2] += (((pcolor[2] - p[2]) *pcolor[3])>>8 );
+                        break;
+                }
+            }
+        }	
 		return;
 	}
-	else if(image->color_type == FB_COLOR_ALPHA_8) /*lab3: font*/
-	{
-		printf("you need implement fb_draw_image() FB_COLOR_ALPHA_8\n"); exit(0);
-
+	/*lab3: font*/
+	else if(image->color_type == FB_COLOR_ALPHA_8) {
+        for(int i = 0; i < h; i++){
+           char* s=src; 
+           char* d=dst;
+           for(int j = 0; j < w; j++){
+                switch (s[0]){
+                    case 0: break;
+                    case 255: 
+                    	d[2] = (color & 0xff0000) >> 16; 
+                    	d[1] = (color & 0xff00) >> 8; 
+                    	d[0] = (color & 0xff); 
+                    	break;
+                    default:
+                        d[2] += (((((color & 0xff0000) >> 16) - d[2]) * s[0]) >> 8);
+                        d[1] += (((((color & 0xff00) >> 8) - d[1]) * s[0]) >> 8);
+                        d[0] += (((((color & 0xff)) - d[0]) * s[0]) >> 8);
+                        break;
+                }
+                s++; d+=4;
+            }
+            dst += SCREEN_WIDTH*4;
+            src += image->line_byte;
+        }
 		return;
 	}
-/*---------------------------------------------------------------*/
 	return;
 }
 
