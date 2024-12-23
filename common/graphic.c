@@ -132,16 +132,17 @@ static void * _begin_draw(int x, int y, int w, int h)
 	return DRAW_BUF;
 }
 
+
+/* --------- Lab2 ---------- */
+// 画点函数
 void fb_draw_pixel(int x, int y, int color)
 {
 	if(x<0 || y<0 || x>=SCREEN_WIDTH || y>=SCREEN_HEIGHT) return;
 	int *buf = _begin_draw(x,y,1,1);
-/*---------------------------------------------------*/
 	*(buf + y*SCREEN_WIDTH + x) = color;
-/*---------------------------------------------------*/
 	return;
 }
-
+// 画块函数
 void fb_draw_rect(int x, int y, int w, int h, int color)
 {
 	if(x < 0) { w += x; x = 0;}
@@ -150,22 +151,39 @@ void fb_draw_rect(int x, int y, int w, int h, int color)
 	if(y+h >SCREEN_HEIGHT) { h = SCREEN_HEIGHT-y;}
 	if(w<=0 || h<=0) return;
 	int *buf = _begin_draw(x,y,w,h);
-/*---------------------------------------------------*/
-	printf("you need implement fb_draw_rect()\n"); exit(0);
-
-/*---------------------------------------------------*/
+	int i,j;
+    for(i = 0; i < h; i++)
+        for(j = 0; j < w; j++)
+            *(buf + (i+y)*SCREEN_WIDTH + (j+x)) = color;
 	return;
 }
-
+// 画线函数
 void fb_draw_line(int x1, int y1, int x2, int y2, int color)
 {
-/*---------------------------------------------------*/
-	printf("you need implement fb_draw_line()\n"); exit(0);
+    int dx = abs(x2 - x1);
+    int dy = abs(y2 - y1);
+    int sx = (x1 < x2) ? 1 : -1;
+    int sy = (y1 < y2) ? 1 : -1;
+    int err = dx - dy;
 
-/*---------------------------------------------------*/
-	return;
+    while (1) {
+		//*(DRAW_BUF + (int)y*SCREEN_WIDTH + (int)x) = color;
+        fb_draw_pixel(x1, y1, color);
+        if (x1 == x2 && y1 == y2) break;
+        int e2 = err * 2;
+        if (e2 > -dy) {
+            err -= dy;
+            x1 += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y1 += sy;
+        }
+    }
 }
 
+
+/* --------- Lab3 ---------- */
 void fb_draw_image(int x, int y, fb_image *image, int color)
 {
 	if(image == NULL) return;

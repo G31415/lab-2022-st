@@ -16,7 +16,7 @@ EXEOBJS := $(patsubst %.c, %.o, $(EXESRCS))
 $(EXENAME): $(EXEOBJS)
 	$(CC) $(LDFLAGS) -o $(EXENAME) $(EXEOBJS) $(LIB)
 	cp $(EXENAME) ../out/
-	# scp -r $(EXENAME) root@192.168.10.168:/root/out/
+	scp -r $(EXENAME) root@192.168.183.168:/root/out/
 
 clean:
 	rm -f $(EXENAME) $(EXEOBJS)
